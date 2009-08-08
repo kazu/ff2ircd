@@ -126,8 +126,6 @@ class IRCServer < WEBrick::GenericServer
   end
 
   def unregister(user, msg="EOF From client")
-    p "unregister"
-    p user
     synchronize do
       socket = user.socket
       @ping_threads[user].kill if @ping_threads.has_key?(socket)
@@ -255,7 +253,6 @@ class IRCServer < WEBrick::GenericServer
         end
         send_server_message(user, "219", c.chr, "End of STATS report")
       when JOIN
-        require "pp"
         if params[0] == "0"
           user.joined_channels.each{|ch|
             channel(ch).part(user, "")
@@ -265,7 +262,6 @@ class IRCServer < WEBrick::GenericServer
           chs = params[0].split(",")
           keys = msg.params[1].split(",") if params.size >= 2
           keys ||= []
-	  #chs += @ff_lists
           chs.each_with_index{|ch, i|
             unless channame?(ch)
               send_server_message(user, "403", ch, "No such channel")
