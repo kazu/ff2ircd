@@ -20,12 +20,8 @@ class FFConnecter
   attr_reader :users
   def initialize(user,remotekey,debug)
     @ff = FriendFeed::Client.new.api2_login(user,remotekey)
-    #p ff 
-    #pp ff.get_list_entries2(user)
-    #pp @ff.call_api2('feed/home') 
     @users = {}
     @channels = {}
-    #@users.extend(MonitorMixin)
     @queue = Queue.new
     @feed2list = {}
     @debug = debug
@@ -49,7 +45,6 @@ class FFConnecter
     return true if @th
     set_server(opt[:ircd])
     @user = opt[:user]
-    #set_user(opt[:user],opt[:socket])
     start
   end
 
@@ -116,11 +111,6 @@ class FFConnecter
   end
 
   def start
-    #@lists.collect{|x| "#" + x } 
-#    @ff.lists.each{|list|
-#      set_channel(list,Channel.new(self, user, list))
-#    handle_reply(user, channel(list).join(user, nil))
-#    }
     set_channels
     puts "fin"
     Thread.abort_on_exception = true
@@ -167,7 +157,6 @@ class FFConnecter
         elm.swap(elm[:href])
       end
     }
-    #debug "converted message: " + doc.to_s
     doc.to_s
   rescue=>e
     STDERR.puts e.message
@@ -177,5 +166,3 @@ class FFConnecter
   
 end
 end
-#ff = FFConnecter.new("xtakei","dogma90hays")
-#pp ff.lists
