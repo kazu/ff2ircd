@@ -9,7 +9,7 @@
 
 require "rubygems"
 require "friendfeed"
-require "ff2"
+require "rupircd/ff2"
 require "pp"
 require "rupircd/user"
 require "thread"
@@ -21,7 +21,7 @@ class FFConnecter
   def initialize(user,remotekey,debug)
     @ff = FriendFeed::Client.new.api2_login(user,remotekey)
     @users = {}
-    @user = user
+    #@user = user
     @channels = {}
     @queue = Queue.new
     @feed2list = {}
@@ -118,15 +118,15 @@ class FFConnecter
     @th = Thread.start do
       @entries = Queue.new
 
-      @ff.feeds_of_friends(@user)["entries"].each{|entry|
+      @ff.feeds_of_friends(@user.nick)["entries"].each{|entry|
         @entries.push entry
       }
 
-      @cursor = @ff.updates(@user, "timeout"=>"1")["realtime"]["cursor"] 
+      @cursor = @ff.updates(@user.nick, "timeout"=>"1")["realtime"]["cursor"] 
 
       loop do
         debug "loop start"
-        entries = @ff.updates(@user, "cursor"=>@cursor, "timeout"=>"20")
+        entries = @ff.updates(@user.nick, "cursor"=>@cursor, "timeout"=>"20")
         @cursor = entries["realtime"]["cursor"]
 
         entries["entries"].each{|entry| @entries.push entry }
