@@ -18,9 +18,9 @@ require 'rupircd/channel.rb'
 require 'rupircd/user'
 require 'rupircd/utils.rb'
 require 'rupircd/message.rb'
-require 'rupircd/charcode'
+#require 'rupircd/charcode'
 require 'rupircd/conf'
-
+require 'rupircd/ffconnecter'
 module IRCd
 class IRCServer < WEBrick::GenericServer
   include Utils
@@ -52,6 +52,7 @@ class IRCServer < WEBrick::GenericServer
     }
     config[:Opers].replace(cf)
     config[:ServerName] = "127.0.0.1"
+    @ff = FFConnecter.new(config[:FFNick],config[:FFRemoteKey],config[:Debug])
   end
 
   def user_from_nick(nick)
@@ -109,6 +110,8 @@ class IRCServer < WEBrick::GenericServer
       host = socket.addr[-1]
     end
     user = User.new(nick, "~"+user[0].split("@")[0], host, user[-1], socket, user[1])
+
+    @ff.recieve_nick(:user=>user,:socket=>socket,:ircd=>self)
     @old_nicks[nick].unshift user.to_a
     @users << user
     send_server_message(user, "001", "Welcome to the Internet Relay Network #{user}")
@@ -123,6 +126,8 @@ class IRCServer < WEBrick::GenericServer
   end
 
   def unregister(user, msg="EOF From client")
+    p "unregister"
+    p user
     synchronize do
       socket = user.socket
       @ping_threads[user].kill if @ping_threads.has_key?(socket)
@@ -250,6 +255,7 @@ class IRCServer < WEBrick::GenericServer
         end
         send_server_message(user, "219", c.chr, "End of STATS report")
       when JOIN
+        require "pp"
         if params[0] == "0"
           user.joined_channels.each{|ch|
             channel(ch).part(user, "")
@@ -259,6 +265,7 @@ class IRCServer < WEBrick::GenericServer
           chs = params[0].split(",")
           keys = msg.params[1].split(",") if params.size >= 2
           keys ||= []
+	  #chs += @ff_lists
           chs.each_with_index{|ch, i|
             unless channame?(ch)
               send_server_message(user, "403", ch, "No such channel")
@@ -637,15 +644,21 @@ class IRCServer < WEBrick::GenericServer
   end
 
   def send_client_message(to, from, cmd, *args)
+    return true unless to.socket
     if to.socket.closed?
       unregister(to)
       return
     end
     msg = cmd.new(from.to_s, cmd.name.split('::').last, args)
     to.socket.puts msg
+  rescue=>e
+    puts "E: send_client_message"
+    p [to, from, cmd, *args]
+    #raise e
   end
 
   def send_server_message(to, msg, *args)
+    return true unless to.socket
     if to.socket.closed?
       unregister(to.socket)
       return
@@ -664,6 +677,11 @@ class IRCServer < WEBrick::GenericServer
 
   def start(*args)
     @started = Time.now
+    #@ff.start
+#    @ff.lists.each{|list|
+#      set_channel(list,Channel.new(self, user, list))
+  #    handle_reply(user, channel(list).join(user, nil))
+#    }
     super
   end
 
