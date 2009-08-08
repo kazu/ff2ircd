@@ -21,6 +21,7 @@ class FFConnecter
   def initialize(user,remotekey,debug)
     @ff = FriendFeed::Client.new.api2_login(user,remotekey)
     @users = {}
+    @user = user
     @channels = {}
     @queue = Queue.new
     @feed2list = {}
@@ -59,7 +60,7 @@ class FFConnecter
 
   def lists
     return @list if @list
-    feedlist = @ff.call_api2('feedlist')
+    feedlist = @ff.feedlist2
     @lists = feedlist["sections"].collect{|x|
       x["feeds"].collect{|feed| 
         next if feed["id"]=~/filter|summary/
@@ -88,8 +89,8 @@ class FFConnecter
 
   def add_users(list)
     uname = nil
-    feeds = @ff.call_api2("feedinfo/" + list)["feeds"]
-    feeds ||= @ff.call_api2("feedinfo/" + list)["subscribers"]
+    feeds = @ff.feedinfo2(list)["feeds"]
+    feeds ||= @ff.feedinfo2(list)["subscribers"]
     feeds.each{|feed|
       uname = feed["id"]
       nick = feed["name"].gsub(/ /,'_')
@@ -116,25 +117,30 @@ class FFConnecter
     Thread.abort_on_exception = true
     @th = Thread.start do
       @entries = Queue.new
-      @ff.call_api2("feed/xtakei/friends")["entries"].each{|entry|
+
+      @ff.feeds_of_friends(@user)["entries"].each{|entry|
         @entries.push entry
       }
-      @cursor = 
-        @ff.call_api2(
-             "updates/feed/xtakei/friends",
-             "timeout"=>"1")["realtime"]["cursor"]
+
+      @cursor = @ff.updates(@user, "timeout"=>"1")["realtime"]["cursor"] 
+
       loop do
         debug "loop start"
-        entries = @ff.call_api2("updates/feed/xtakei/friends","cursor"=>@cursor,"timeout"=>"20")
+        entries = @ff.updates(@user, "cursor"=>@cursor, "timeout"=>"20")
         @cursor = entries["realtime"]["cursor"]
+
         entries["entries"].each{|entry| @entries.push entry }
+
         while !(@entries.empty?) do
           entry = @entries.pop
           next unless entry["from"]
+
           id = entry["from"]["id"]
           debug entry["body"]
           msg = ircbody(entry)
+
           debug "privmsg: " + entry["from"]["name"] , msg 
+
           @feed2list[id].each{|chname|
             @server.handle_reply(
               @users[id],

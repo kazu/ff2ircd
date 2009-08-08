@@ -61,6 +61,26 @@ module FriendFeed
       require_api_login
       call_api2('feedlist') #/%s' % URI.encode(nickname))['entries']
     end
+    
+    def feedlist2
+      require_api_login
+      call_api2('feedlist')
+    end
+ 
+    def feedinfo2(feed)
+      require_api_login
+      call_api2("feedinfo/" + feed)
+    end
+
+    def feeds_of_friends(user)
+      require_api_login
+      call_api2(["feed", user, "friends"].join("/"))
+    end
+
+    def updates(user, opt={})
+      require_api_login
+      call_api2(["updates/feed", user, "friends"].join("/"), opt )
+    end
 
   end
 end
