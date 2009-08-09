@@ -11,21 +11,6 @@
 require "friendfeed"
 
 
-class Net::HTTP
-  #alias_method :orig_request, :request
-  def _request(req, body = nil, &block)
-    puts "request"
-    require "pp"
-    pp req
-    pp body
-    if block
-      orig_request(req,body,&block) 
-    else
-      orig_request(req, body)
-    end
-  end
-end
-
 module FriendFeed
 
   # Client library for FriendFeed API.
