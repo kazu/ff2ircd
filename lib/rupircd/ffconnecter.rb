@@ -49,6 +49,16 @@ class FFConnecter
     start
   end
 
+  def recieve_msg(opt={})
+    if opt[:user] != @user
+      debug opt[:user].nick + ": no own message"
+      return false
+    end
+    debug "send message: " + opt[:msg]
+    #@ff.add(opt[:msg])
+    @ff.add_entry(opt[:msg])
+  end
+
   def set_server(ircd)
     @server = ircd
   end

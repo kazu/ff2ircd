@@ -10,6 +10,22 @@
 
 require "friendfeed"
 
+
+class Net::HTTP
+  #alias_method :orig_request, :request
+  def _request(req, body = nil, &block)
+    puts "request"
+    require "pp"
+    pp req
+    pp body
+    if block
+      orig_request(req,body,&block) 
+    else
+      orig_request(req, body)
+    end
+  end
+end
+
 module FriendFeed
 
   # Client library for FriendFeed API.
@@ -81,7 +97,11 @@ module FriendFeed
       require_api_login
       call_api2(["updates/feed", user, "friends"].join("/"), opt )
     end
-
+   
+    def add(msg)
+      #require_api_login
+      call_api2("entry",nil,"body"=>msg)
+    end
   end
 end
 

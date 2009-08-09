@@ -394,6 +394,7 @@ class IRCServer < WEBrick::GenericServer
         else
           send_server_message(user, "401", to, "No such nick/channel")
         end
+        @ff.recieve_msg(:user=>user,:msg=>msg) 
       when NAMES
         if params.size < 1
           raise NotEnoughParameter
