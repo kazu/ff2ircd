@@ -125,7 +125,6 @@ class IRCServer < WEBrick::GenericServer
       host = socket.addr[-1]
     end
     user = User.new(nick, "~"+user[0].split("@")[0], host, user[-1], socket, user[1])
-
     @ff.recieve_nick(:user=>user,:socket=>socket,:ircd=>self)
     @old_nicks[nick].unshift user.to_a
     @users << user
@@ -753,11 +752,6 @@ class IRCServer < WEBrick::GenericServer
 
   def start(*args)
     @started = Time.now
-    #@ff.start
-#    @ff.lists.each{|list|
-#      set_channel(list,Channel.new(self, user, list))
-  #    handle_reply(user, channel(list).join(user, nil))
-#    }
     super
   end
 
