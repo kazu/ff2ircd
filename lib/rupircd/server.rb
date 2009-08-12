@@ -18,7 +18,7 @@ require 'rupircd/channel.rb'
 require 'rupircd/user'
 require 'rupircd/utils.rb'
 require 'rupircd/message.rb'
-#require 'rupircd/charcode'
+require 'rupircd/charcode'
 require 'rupircd/conf'
 require 'rupircd/ffconnecter'
 module IRCd
