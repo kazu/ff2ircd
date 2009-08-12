@@ -1,9 +1,9 @@
 =begin
 = rupircd -- Ruby Pseudo IRC Deamon
 
-  ver 0.5b2 2008-08-27T12:17:46+09:00
+  ver 0.6 2009-08-11T23:45:52+09:00
   
-  Copyright (c) 2008 Hiromi Ishii
+  Copyright (c) 2009 Hiromi Ishii
   
   You can redistribute it and/or modify it under the same term as Ruby.
 =end
@@ -47,10 +47,10 @@ class IRCServer < WEBrick::GenericServer
     @old_nicks = Hash.new{|h, k| h[k] = []}
     config.replace(@fconf.load)
     cf = {}
-    config[:Opers].each{|nick, pass|
+    config.fetch(:Opers,{}).each{|nick, pass|
       cf[mask_to_regex(nick)] = pass
     }
-    config[:Opers].replace(cf)
+    config[:Opers] = cf
     config[:ServerName] = "127.0.0.1"
     @ff = FFConnecter.new(config[:FFNick],config[:FFRemoteKey],config[:Debug])
   end
@@ -186,7 +186,7 @@ class IRCServer < WEBrick::GenericServer
       when OPER
         raise NotEnoughParameter if params.size < 2
         nick, pass = params
-        unless opdic = config[:Opers].find{|k, v| k =~ nick}
+        unless opdic = config.fetch(:Opers,{}).find{|k, v| k =~ nick}
           send_server_message(user, "491", "No O-lines for your host")
           return
         end
@@ -302,7 +302,6 @@ class IRCServer < WEBrick::GenericServer
       when INFO
         config[:Info].each_line{|line|
           line.chomp!
-          line.tojis!
           send_server_message(user, "371", line)
         }
         send_server_message(user, "374", "End of INFO list")
@@ -483,7 +482,7 @@ class IRCServer < WEBrick::GenericServer
           end
         end
       when USER, PASS
-        user.socket.puts ERR_ALREADYREGISTRED.new(config[:ServerName], "462", [user.nick, "Unauthorized command (already registered)"])
+        puts_socket(user, ERR_ALREADYREGISTRED.new(config[:ServerName], "462", [user.nick, "Unauthorized command (already registered)"]))
       when WHOIS
         raise NotEnoughParameter if params.empty?
         params[0].split(",").each{|mask|
@@ -640,28 +639,36 @@ class IRCServer < WEBrick::GenericServer
     end
   end
 
-  def send_client_message(to, from, cmd, *args)
-    return true unless to.socket
-    if to.socket.closed?
-      unregister(to)
-      return
+  def puts_socket(user, *args)
+    user.socket.synchronize do
+      if user.socket.closed?
+        unregister(user, "Connection reset by peer")
+      else
+        begin
+          args.map!{|a| a.to_s.encode config().fetch(:Encoding, "ISO-2022-JP")}
+          user.socket.puts(*args)
+        rescue Errno::EPIPE => e
+          unregister(user, "Connection reset by peer")
+        end
+      end
     end
+  end
+
+  def send_client_message(to, from, cmd, *args)
     msg = cmd.new(from.to_s, cmd.name.split('::').last, args)
-    to.socket.puts msg
+    return true unless to.socket
+    puts_socket(to, msg)
   rescue=>e
     puts "E: send_client_message"
     p [to, from, cmd, *args]
     #raise e
+ 
   end
 
   def send_server_message(to, msg, *args)
     return true unless to.socket
-    if to.socket.closed?
-      unregister(to.socket)
-      return
-    end
     args.unshift to.nick
-    to.socket.puts Message.build(config[:ServerName], msg, args)
+    puts_socket(to, Message.build(config[:ServerName], msg, args) )
   end
 
   def channel(chname)
