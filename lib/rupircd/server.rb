@@ -311,7 +311,7 @@ class IRCServer < WEBrick::GenericServer
       when TIME
         send_server_message(user, "391", config[:ServerName], Time.now.to_s)
       when PONG
-        @ping_threads[user].kill
+        @ping_threads[user].kill if @ping_threads[user].respond_to?(:kill)
         start_ping(user)
       when INVITE
         if params.size < 2
