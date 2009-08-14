@@ -57,6 +57,13 @@ module IRCd::ServerHook
       }
     }
   end
+  def hook(src,callback)
+    _hook(src,callback){|server,orig_method,*args|
+      server.instance_eval{@ff}.send(callback,server,*args){|server|
+          server.__send__(orig_method,*args)
+      }
+    }
+  end
 end
 
 module IRCd
@@ -70,6 +77,16 @@ class FFConnecter < AbstractFF
   after :init,:after_init
   after :on_privmsg, :after_privmsg
   before :send_server_message, :before_send_server_message
+  hook :send_client_message, :hook_send_client_message
+
+  def hook_send_client_message(server,*args)
+    to = args[0]
+    return true unless to.socket
+    yield(server)
+  rescue=>e 
+    debug "E: send_client_message"
+    debug e.message
+  end
 
   def before_send_server_message(*args)
     to = args[0]

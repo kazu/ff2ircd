@@ -725,13 +725,7 @@ class IRCServer < WEBrick::GenericServer
 
   def send_client_message(to, from, cmd, *args)
     msg = cmd.new(from.to_s, cmd.name.split('::').last, args)
-    return true unless to.socket
     puts_socket(to, msg)
-  rescue=>e
-    puts "E: send_client_message"
-    p [to, from, cmd, *args]
-    #raise e
- 
   end
 
   def send_server_message(to, msg, *args)
