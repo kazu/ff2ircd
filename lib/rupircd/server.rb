@@ -735,7 +735,6 @@ class IRCServer < WEBrick::GenericServer
   end
 
   def send_server_message(to, msg, *args)
-    return true unless to.socket
     args.unshift to.nick
     puts_socket(to, Message.build(config[:ServerName], msg, args) )
   end

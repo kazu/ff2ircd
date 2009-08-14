@@ -17,7 +17,8 @@ require "hpricot"
 require "rupircd/server"
 
 module IRCd::ServerHook
-  def after(src,callback)
+
+  def _hook(src,callback)
     IRCd::IRCServer.__send__(:define_method, :set_ff, Proc.new{|x|
       @ff = x
     })
@@ -25,15 +26,37 @@ module IRCd::ServerHook
     IRCd::IRCServer.__send__(:alias_method, orig_method, src)
 
     IRCd::IRCServer.__send__(:define_method, src, Proc.new{|*args|
-      __send__( orig_method,*args)
-      unless @ff
-        ff = IRCd::FFConnecter.new
-        ff.set_server(self)
-        set_ff(ff)
-      end
-      @ff.send(callback,*args)
+      begin 
+        unless @ff
+          p "new ff"
+          ff = IRCd::FFConnecter.new
+          ff.set_server(self)
+          set_ff(ff)
+        end
+        yield(self,orig_method,*args)
+     rescue RuntimeError=>e
+       #@ff.debug e.message,e.backtrace
+     end
     })
   end 
+
+  def before(src,callback)
+    _hook(src,callback){|server,orig_method,*args|
+      server.instance_eval{
+	@ff.send(callback,*args)
+      }
+      server.__send__(orig_method,*args)
+    }
+  end
+
+  def after(src,callback)
+    _hook(src,callback){|server,orig_method,*args|
+      server.__send__(orig_method,*args)
+      server.instance_eval{ 
+        @ff.send(callback,*args)
+      }
+    }
+  end
 end
 
 module IRCd
@@ -44,9 +67,16 @@ end
 
 class FFConnecter < AbstractFF
   attr_reader :users
-  after :init,:on_init
+  after :init,:after_init
   after :on_privmsg, :after_privmsg
-  def on_init(*args)
+  before :send_server_message, :before_send_server_message
+
+  def before_send_server_message(*args)
+    to = args[0]
+    raise RuntimeError unless to.socket
+  end
+
+  def after_init(*args)
     user = @server.instance_eval{config[:FFNick]}
     remote_key = @server.instance_eval{config[:FFRemoteKey]}
     debug = @server.instance_eval{config[:Debug]}
