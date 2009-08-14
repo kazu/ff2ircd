@@ -14,11 +14,51 @@ require "pp"
 require "rupircd/user"
 require "thread"
 require "hpricot"
+require "rupircd/server"
+
+module IRCd::ServerHook
+  def after(src,callback)
+    IRCd::IRCServer.__send__(:define_method, :set_ff, Proc.new{|x|
+      @ff = x
+    })
+    orig_method = (src.to_s + "_orig").to_sym
+    IRCd::IRCServer.__send__(:alias_method, orig_method, src)
+
+    IRCd::IRCServer.__send__(:define_method, src, Proc.new{|*args|
+      __send__( orig_method,*args)
+      unless @ff
+        ff = IRCd::FFConnecter.new
+        ff.set_server(self)
+        set_ff(ff)
+      end
+      @ff.send(callback,*args)
+    })
+  end 
+end
 
 module IRCd
-class FFConnecter
+
+class AbstractFF
+  extend IRCd::ServerHook
+end
+
+class FFConnecter < AbstractFF
   attr_reader :users
-  def initialize(user,remotekey,debug)
+  after :init,:on_init
+  after :on_privmsg, :after_privmsg
+  def on_init(*args)
+    user = @server.instance_eval{config[:FFNick]}
+    remote_key = @server.instance_eval{config[:FFRemoteKey]}
+    debug = @server.instance_eval{config[:Debug]}
+    init(user, remote_key, debug)
+  end
+
+  def after_privmsg(*args)
+    recieve_msg(:user=>params[0],:msg=>params[2])
+  end
+
+  def init(user,remotekey,debug)
+    p "init: ",user,remotekey,debug
     @ff = FriendFeed::Client.new.api2_login(user,remotekey)
     @users = {}
     #@user = user
@@ -60,7 +100,8 @@ class FFConnecter
   end
 
   def set_server(ircd)
-    @server = ircd
+    @server = ircd unless @server
+    @server
   end
  
   def join(chname)

@@ -20,7 +20,7 @@ require 'rupircd/utils.rb'
 require 'rupircd/message.rb'
 require 'rupircd/charcode'
 require 'rupircd/conf'
-require 'rupircd/ffconnecter'
+
 module IRCd
   VERSION = "0.6.2"
 
@@ -67,7 +67,6 @@ class IRCServer < WEBrick::GenericServer
     }
     config[:Opers] = cf
     config[:ServerName] = "127.0.0.1"
-    @ff = FFConnecter.new(config[:FFNick],config[:FFRemoteKey],config[:Debug])
   end
 
   def user_from_nick(nick)
@@ -444,7 +443,6 @@ class IRCServer < WEBrick::GenericServer
     else
       send_server_message(user, "401", to, "No such nick/channel")
     end
-    @ff.recieve_msg(:user=>user,:msg=>msg)
   end
 
   def on_names(user, params)

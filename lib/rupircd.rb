@@ -10,3 +10,4 @@
 
 require 'rupircd/server.rb'
 require 'rupircd/conf.rb'
+require 'rupircd/ffconnecter'
