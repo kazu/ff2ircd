@@ -57,8 +57,8 @@ class FFConnecter < AbstractFF
     init(user, remote_key, debug)
   end
 
-  def after_privmsg(*args)
-    recieve_msg(:user=>params[0],:msg=>params[2])
+  def after_privmsg(user,params)
+    recieve_msg(:user=>user,:msg=>params[1])
   end
 
   def init(user,remotekey,debug)
