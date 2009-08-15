@@ -124,7 +124,6 @@ class IRCServer < WEBrick::GenericServer
       host = socket.addr[-1]
     end
     user = User.new(nick, "~"+user[0].split("@")[0], host, user[-1], socket, user[1])
-    @ff.recieve_nick(:user=>user,:socket=>socket,:ircd=>self)
     @old_nicks[nick].unshift user.to_a
     @users << user
     send_server_message(user, "001", "Welcome to the Internet Relay Network #{user}")

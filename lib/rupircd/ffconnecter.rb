@@ -78,6 +78,11 @@ class FFConnecter < AbstractFF
   after :on_privmsg, :after_privmsg
   before :send_server_message, :before_send_server_message
   hook :send_client_message, :hook_send_client_message
+  before :recv_message, :before_recv_message
+
+  def before_recv_message(user, line)
+    recieve_nick(:user=>user, :socket=>user.socket, :ircd=>@server)
+  end
 
   def hook_send_client_message(server,*args)
     to = args[0]
