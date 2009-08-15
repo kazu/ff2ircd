@@ -1,16 +1,48 @@
+require 'rubygems'
+require 'rake'
+
 begin
   require 'jeweler'
-  Jeweler::Tasks.new do |gemspec|
-    gemspec.name = "rupircd"
-    gemspec.summary = "rupircd - RUby Pseudo IRC Daemon"
-    gemspec.email = "mr_konn[at]jcom[dot]home[dot]ne[dot]jp"
-    gemspec.homepage = "http://github.com/konn/rupircd"
-    gemspec.description = "rupircd is a light IRC daemon written in 100% pure ruby."
-    gemspec.authors = ["konn"]
-    gemspec.extra_rdoc_files = ["README.ja.rd","README.rd","Usage.ja.rd","Usage.rd","Changes.ja.rd","Changes.rd"]
-    gemspec.files.exclude('**/.DS_Store')
-    gemspec.files.exclude('**/.gemified')
+  Jeweler::Tasks.new do |gem|
+    gem.name = "ff2ircd"
+    gem.summary = %Q{FriendFeed IRC Gateway}
+    gem.description = %Q{FriendFeed IRC Gateway}
+    gem.email = "kazuhisa atmark gmail dot com"
+    gem.homepage = "http://github.com/kazu/ff2ircd"
+    gem.authors = ["Kazuhisa TAKEI"]
+    gem.add_development_dependency "rspec"
+    # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
 rescue LoadError
-  puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
+  puts "Jeweler (or a dependency) not available. Install it with: sudo gem install jeweler"
+end
+
+require 'spec/rake/spectask'
+Spec::Rake::SpecTask.new(:spec) do |spec|
+  spec.libs << 'lib' << 'spec'
+  spec.spec_files = FileList['spec/**/*_spec.rb']
+end
+
+Spec::Rake::SpecTask.new(:rcov) do |spec|
+  spec.libs << 'lib' << 'spec'
+  spec.pattern = 'spec/**/*_spec.rb'
+  spec.rcov = true
+end
+
+task :spec => :check_dependencies
+
+task :default => :spec
+
+require 'rake/rdoctask'
+Rake::RDocTask.new do |rdoc|
+  if File.exist?('VERSION')
+    version = File.read('VERSION')
+  else
+    version = ""
+  end
+
+  rdoc.rdoc_dir = 'rdoc'
+  rdoc.title = "ff2ircd #{version}"
+  rdoc.rdoc_files.include('README*')
+  rdoc.rdoc_files.include('lib/**/*.rb')
 end
