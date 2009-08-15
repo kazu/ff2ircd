@@ -1,7 +1,33 @@
-= ff2ircd
+= ff2ircd - FrinedFeed IRC Gateway 
 
-FrinedFeed IRC Gateway
+== Usage
 
+start ff2ircd
+
+% ruby bin/ff2ircd ff.conf
+
+== Requirements
+* ruby 1.8.x
+* rupircd >= 0.6.3
+* hpricot
+* ruby-friendfeed
+
+== Features
+
+* work as IRCd.
+* FriendFeed's list/group and IRC channel is on a one-to-one ratio.
+* FriendFeed's User and IRC User is on a one-to-one ratio.
+* only one user can connect this server:P
+
+
+== TODO
+* treating between IRC NickName and FF's user
+* picture/file upload/download and CTCP.
+* PING/PONG
+* add newfeed
+
+
+ 
 == Note on Patches/Pull Requests
  
 * Make your feature addition or bug fix.

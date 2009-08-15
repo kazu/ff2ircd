@@ -7,6 +7,7 @@
   You can redistribute it and/or modify it under the same term as Ruby.
 =end
 
+require "rubygems"
 require "ff2ircd"
 
 if ARGV.empty?
