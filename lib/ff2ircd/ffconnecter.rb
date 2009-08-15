@@ -9,13 +9,14 @@
 
 require "rubygems"
 require "friendfeed"
-require "rupircd/ff2"
+require "ff2ircd/ff2"
 require "pp"
 require "rupircd/user"
 require "thread"
 require "hpricot"
+
 require "rupircd/server"
-require "rupircd/serverhook"
+require "ff2ircd/serverhook"
 
 module IRCd
 
